@@ -132,7 +132,6 @@ export class Socket {
      * @param {*} reader 
      */
     addCell(reader) {
-        const playerid = reader.getUint16();
         const cellCount = reader.getUint16();
         
         // Cell
@@ -145,6 +144,7 @@ export class Socket {
 
             // PlayerCellならば
             if (cellType == 3) {
+                const playerid = reader.getUint16();
                 const player = this.gamecore.allPlayers.getData(playerid);
                 player.addCell(cellId, cellType, x, y, size);
                 this.gamecore.allPlayers.setData(id, player);

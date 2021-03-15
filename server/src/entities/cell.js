@@ -1,4 +1,4 @@
-const { Box, Circle } = require("js-quadtree");
+const { Circle } = require("js-quadtree");
 const Vector2 = require("../commons/vector");
 
 // Eject 1

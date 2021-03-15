@@ -25,6 +25,7 @@ class Socket {
         ws.player = new Player(ws);
         ws.receiver = new Receiver(ws);
         ws.emitter = new Emitter(ws);
+        ws.emitter.create();
 
         ws.on("message", (msg) => {
             this.onMessage(msg, ws);

@@ -27,15 +27,6 @@ export class Emitter {
             writer.setUint32(player.id);
             writer.setString(player.team);
             writer.setString(player.name);
-            writer.setUint16(player.cells.length);
-            player.cells.forEach(function(cell) {
-                writer.setUint32(cell.id);
-                writer.setUint8(cell.type);
-                writer.setFloat(cell.position.x);
-                writer.setFloat(cell.position.y);
-                writer.setUint16(cell.size);
-                writer.setString(cell.color);
-            })
         })
         return writer.toBuffer();
     }
@@ -62,17 +53,50 @@ export class Emitter {
     }
     // 11 -------------------------------------------------
     addCell() {
+        if (this.addCellQueue.length == 0) return;
         const writer = new Writer();
+        writer.setUint16(this.addCellQueue.length);
+        this.addCellQueue.forEach((cell) => {
+            writer.setUint16(cell.id);
+            writer.setUint16(cell.type);
+            writer.setUint16(cell.position.x);
+            writer.setUint16(cell.position.y);
+            writer.setUint16(cell.size);
+            if (cell.type == 3) {
+                writer.setUint16(cell.player.id);
+            }
+        })
         return writer.toBuffer();
     }
 
     updateCell() {
+        if (this.updateCellQueue.length == 0) return;
         const writer = new Writer();
+        writer.setUint16(this.updateCellQueue.length);
+        this.updateCellQueue.forEach((cell) => {
+            writer.setUint16(cell.id);
+            writer.setUint16(cell.type);
+            writer.setUint16(cell.position.x);
+            writer.setUint16(cell.position.y);
+            writer.setUint16(cell.size);
+            if (cell.type == 3) {
+                writer.setUint16(cell.player.id);
+            }
+        })
         return writer.toBuffer();
     }
 
     deleteCell() {
+        if (this.deleteCellQueue.length == 0) return;
         const writer = new Writer();
+        writer.setUint16(this.deleteCellQueue.length);
+        this.deleteCellQueue.forEach((cell) => {
+            writer.setUint16(cell.id);
+            writer.setUint16(cell.type);
+            if (cell.type == 3) {
+                writer.setUint16(cell.player.id);
+            }
+        })
         return writer.toBuffer();
     }
 
