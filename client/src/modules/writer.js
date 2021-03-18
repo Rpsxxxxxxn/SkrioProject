@@ -1,4 +1,4 @@
-class Writer {
+export class Writer {
     constructor(littleEndian) {
         this.buffer = new DataView(new ArrayBuffer(8));
         this.endian = littleEndian;

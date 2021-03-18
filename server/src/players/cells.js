@@ -29,9 +29,8 @@ class Cells {
         const position = Utility.getRandomPosition();
         const playerCell = new PlayerCell(this, 0, position.x, position.y, 132, this.color);
         playerCell.newNode();
-        this.cells.push(playerCell);
+        this.insertCell(playerCell);
         room.addQuadNode(playerCell);
-        room.activeCells.push(playerCell);
     }
 
     split(room) {
@@ -43,26 +42,27 @@ class Cells {
             cell.setSplitParams(angle);
             const playerCell = new PlayerCell(this, 0, cell.position.x, cell.position.y, cell.getSplitedMass(), this.color);
             playerCell.newNode();
-            this.cells.push(playerCell);
+            this.insertCell(playerCell);
             room.addQuadNode(playerCell);
-            room.activeCells.push(playerCell);
         }
     }
 
     eject(room) {
         this.cells.forEach(cell => {
-            const cell = this.cells[i];
             const direction = cell.position.direction(this.mousePosition);
             const angle = Math.atan2(direction.y, direction.x);
             cell.setSplitParams(angle);
             const eject = new Eject(this, 0, cell.position.x, cell.position.y, 10, this.color);
             room.addQuadNode(eject);
-            room.activeCells.push(eject);
         });
     }
 
     autoSplit() {
         
+    }
+
+    insertCell(cell) {
+        this.cells.push(cell);
     }
 
     isAlive() {

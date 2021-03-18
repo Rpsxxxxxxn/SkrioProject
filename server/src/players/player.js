@@ -21,7 +21,11 @@ class Player {
         // Camera
         this.position = new Vector2(0, 0);
         this.oldViewNodes = [];
-        this.nowViewNodes = [];
+        this.newViewNodes = [];
+
+        if (!this.isConnected) {
+            this.isConnected = true;
+        }
     }
 
     /**
@@ -53,56 +57,45 @@ class Player {
      * @param {*} room 
      */
     updateViewNodes(room) {
-        const position = this.cellsArray[this.tabActive].viewPosition;
-        this.position.set(position.x, position.y); 
-
-        // カメラの設定
-        this.nowViewNodes = [];
-        const viewBox = new Box(
-            this.position.x - 500,
-            this.position.y - 500,
-            1000,
-            1000
-        );
-
-        // 実際に映っている細胞の産出
-        const newViewCells = room.query(viewBox);
-        newViewCells.forEach(cell => {
-            this.nowViewNodes.push(cell.data);
-        })
-        this.nowViewNodes.sort((a, b) => { return a.id - b.id });
-
-        // 追加と更新と削除を調べる
-        let oldIndex = 0;
-        let nowIndex = 0;
-        for (; nowIndex < this.nowViewNodes[nowIndex] && oldIndex < this.oldViewNodes[oldIndex];) {
-            if (this.nowViewNodes[nowIndex].id < this.oldViewNodes[oldIndex].id) {
-                this.ws.emitter.addCellQueue.push(this.nowViewNodes[nowIndex]);
-                nowIndex++;
-                continue;
-            }
-            if (this.nowViewNodes[nowIndex].id > this.oldViewNodes[oldIndex].id) {
-                this.ws.emitter.deleteCellQueue.push(this.oldViewNodes[oldIndex]);
-                oldIndex++;
-                continue;
-            }
-            
-            const node = this.nowViewNodes[nowIndex];
-            this.ws.emitter.updateCellQueue.push(node);
-            nowIndex++;
-            oldIndex++;
+        if (this.cellsArray.length) {
+            const position = this.cellsArray[this.tabActive].viewPosition;
+            this.position.set(position.x, position.y); 
+    
+            // カメラの設定
+            this.newViewNodes = [];
+            const viewBox = new Box(
+                this.position.x - 500,
+                this.position.y - 500,
+                1000,
+                1000
+            );
+    
+            // 実際に映っている細胞の産出
+            const newViewCells = room.query(viewBox);
+            newViewCells.forEach(cell => {
+                this.newViewNodes.push(cell.data);
+            })
+            this.newViewNodes.sort((a, b) => { return a.id - b.id });
+    
+            // 追加と更新と削除を調べる
+            let groupNodes = this.newViewNodes.concat(this.oldViewNodes)
+            groupNodes.forEach(item => {
+                // Add
+                if (this.newViewNodes.includes(item) && !this.oldViewNodes.includes(item)) {
+                    this.ws.emitter.addCellQueue.push(item);
+                } 
+                // Delete
+                else if (!this.newViewNodes.includes(item) && this.oldViewNodes.includes(item)) {
+                    this.ws.emitter.deleteCellQueue.push(item);
+                } 
+                // Update
+                else {
+                    this.ws.emitter.updateCellQueue.push(item);
+                }
+            });
+    
+            this.oldViewNodes = this.newViewNodes;
         }
-        for (; nowIndex < this.nowViewNodes.length;) {
-            const node = this.nowViewNodes[nowIndex];
-            this.ws.emitter.addCellQueue.push(node);
-            nowIndex++;
-        }
-        for (; oldIndex < this.oldViewNodes.length;) {
-            const node = this.oldViewNodes[oldIndex];
-            this.ws.emitter.deleteCellQueue.push(node);
-            oldIndex++;
-        }
-        this.oldViewNodes = this.nowViewNodes;
     }
 }
 

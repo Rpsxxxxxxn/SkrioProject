@@ -18,10 +18,16 @@ export class GameCore {
     }
 
     create() {
+        // レンダラ作成
         this.render = new Render();
+        // ソケット作成
         this.socket = new Socket(this);
+        this.socket.create();
+        // マウス作成
         this.mouse = new Mouse();
+        // キーボード作成
         this.keyboard = new Keyboard();
+        // カメラ作成
         this.camera = new Camera();
     }
 

@@ -1,9 +1,11 @@
-import Writer from "../modules/writer";
+const Writer = require("./writer");
 
-export class Emitter {
+class Emitter {
     constructor(ws) {
         this.ws = ws;
+    }
 
+    create() {
         this.addPlayerQueue = [];
         this.updatePlayerQueue = [];
         this.deletePlayerQueue = [];
@@ -13,48 +15,52 @@ export class Emitter {
     }
 
     // 1 -------------------------------------------------
-    setId(id) {
+    setPlayerId() {
         const writer = new Writer();
-        return writer.toBuffer();
+        writer.setUint8(0);
+        writer.setUint32(this.ws.player.id);
+        console.log(this.ws.player.id)
+        this.send(writer.toBuffer());
     }
 
     // 10 -------------------------------------------------
-    addPlayer() {
-        if (this.addPlayerQueue.length == 0) return;
+    playerUpdate() {
         const writer = new Writer();
+        writer.setUint8(10);
+
+        // ADD
         writer.setUint16(this.addPlayerQueue.length);
-        this.addPlayerQueue.forEach(function(player){
+        this.addPlayerQueue.forEach((player) => {
             writer.setUint32(player.id);
             writer.setString(player.team);
             writer.setString(player.name);
         })
-        return writer.toBuffer();
-    }
+        this.addPlayerQueue.length = 0;
 
-    updatePlayer() {
-        if (this.updatePlayerQueue.length == 0) return;
-        const writer = new Writer();
+        // UPDATE
         writer.setUint16(this.updatePlayerQueue.length);
-        this.updatePlayerQueue.forEach(function(player) {
+        this.updatePlayerQueue.forEach((player) => {
             writer.setString(player.team);
             writer.setString(player.name);
         })
-        return writer.toBuffer();
-    }
+        this.updatePlayerQueue.length = 0;
 
-    deletePlayer() {
-        if (this.deletePlayerQueue.length == 0) return;
-        const writer = new Writer();
+        // DELETE
         writer.setUint16(this.deletePlayerQueue.length);
-        this.deletePlayerQueue.forEach(function(player) {
+        this.deletePlayerQueue.forEach((player) => {
             writer.setUint32(player.id);
         })
-        return writer.toBuffer();
+        this.deletePlayerQueue.length = 0;
+
+        this.send(writer.toBuffer());
     }
+
     // 11 -------------------------------------------------
-    addCell() {
-        if (this.addCellQueue.length == 0) return;
+    cellUpdate() {
         const writer = new Writer();
+        writer.setUint8(11);
+
+        // ADD
         writer.setUint16(this.addCellQueue.length);
         this.addCellQueue.forEach((cell) => {
             writer.setUint16(cell.id);
@@ -66,12 +72,9 @@ export class Emitter {
                 writer.setUint16(cell.player.id);
             }
         })
-        return writer.toBuffer();
-    }
-
-    updateCell() {
-        if (this.updateCellQueue.length == 0) return;
-        const writer = new Writer();
+        this.addCellQueue.length = 0;
+        
+        // UPDATE
         writer.setUint16(this.updateCellQueue.length);
         this.updateCellQueue.forEach((cell) => {
             writer.setUint16(cell.id);
@@ -83,12 +86,9 @@ export class Emitter {
                 writer.setUint16(cell.player.id);
             }
         })
-        return writer.toBuffer();
-    }
-
-    deleteCell() {
-        if (this.deleteCellQueue.length == 0) return;
-        const writer = new Writer();
+        this.updateCellQueue.length = 0;
+        
+        // DELETE
         writer.setUint16(this.deleteCellQueue.length);
         this.deleteCellQueue.forEach((cell) => {
             writer.setUint16(cell.id);
@@ -97,7 +97,9 @@ export class Emitter {
                 writer.setUint16(cell.player.id);
             }
         })
-        return writer.toBuffer();
+        this.deleteCellQueue.length = 0;
+
+        this.send(writer.toBuffer());
     }
 
     // 12 -------------------------------------------------
@@ -117,4 +119,12 @@ export class Emitter {
         const writer = new Writer();
         return writer.toBuffer();
     }
+
+    send(packet) {
+        if (this.ws.player.isConnected) {
+            this.ws.send(packet, { binary: true });
+        }
+    }
 }
+
+module.exports = Emitter;

@@ -1,4 +1,5 @@
 import { Cell } from "../entities/cell";
+import { Reader } from "../modules/reader";
 import { Player } from "../players/player";
 
 export class Socket {
@@ -83,6 +84,7 @@ export class Socket {
     setId(reader) {
         let id = reader.getUint32();
         this.gamecore.playerId = id;
+        console.log(id);
     }
 
     /**
@@ -93,8 +95,8 @@ export class Socket {
         const playerCount = reader.getUint16();
         for (let i = 0; i < playerCount; i++) {
             const id = reader.getUint32();
-            const team = reader.getStringEX();
-            const name = reader.getStringEX();
+            const team = reader.getString();
+            const name = reader.getString();
             const player = new Player(this.gamecore, id, team, name);
             this.gamecore.allPlayers.setData(id, player);
         }
@@ -109,8 +111,8 @@ export class Socket {
         for (let i = 0; i < playerCount; i++) {
             const id = reader.getUint32();
             const player = this.gamecore.allPlayers.getData();
-            player.setTeam(reader.getStringEX());
-            player.setName(reader.getStringEX());
+            player.setTeam(reader.getString());
+            player.setName(reader.getString());
             this.gamecore.allPlayers.setData(id, player);
         }
     }
@@ -138,8 +140,8 @@ export class Socket {
         for (let i = 0; i < cellCount; i++) {
             const cellId = reader.getUint32();
             const cellType = reader.getUint8();
-            const x = reader.getFloat32();
-            const y = reader.getFloat32();
+            const x = reader.getFloat();
+            const y = reader.getFloat();
             const size = reader.getUint16();
 
             // PlayerCellならば
@@ -166,8 +168,8 @@ export class Socket {
         for (let i = 0; i < cellCount; i++) {
             const cellId = reader.getUint32();
             const cellType = reader.getUint8();
-            const x = reader.getFloat32();
-            const y = reader.getFloat32();
+            const x = reader.getFloat();
+            const y = reader.getFloat();
             const size = reader.getUint16();
 
             if (cellType == 3) {
@@ -214,10 +216,10 @@ export class Socket {
         
         const player = this.gamecore.allPlayers.getData(playerid);
         for (let i = 0; i < playerCount; i++) {
-            const mapx = reader.getFloat32();
-            const mapy = reader.getFloat32();
-            const mx = reader.getFloat32();
-            const my = reader.getFloat32();
+            const mapx = reader.getFloat();
+            const mapy = reader.getFloat();
+            const mx = reader.getFloat();
+            const my = reader.getFloat();
             player.setMousePosition(x, y);
         }
     }

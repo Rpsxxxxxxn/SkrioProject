@@ -1,4 +1,5 @@
 const { QuadTree, Box, Circle } = require('js-quadtree');
+const Logger = require('../commons/logger');
 
 class Room {
     constructor(container) {
@@ -7,6 +8,10 @@ class Room {
         this.quadtree = new QuadTree(this.fieldSize);
         this.clients = [];
         this.activeCells = [];
+    }
+
+    create() {
+        Logger.info("Create Room");
     }
 
     /**
@@ -48,6 +53,7 @@ class Room {
         let node = new Circle(cell.position.x, cell.position.y, cell.size, cell);
         cell.setNode(node);
         this.quadtree.insert(node);
+        this.activeCells.push(cell);
     }
 
     /**
@@ -74,6 +80,7 @@ class Room {
     removeQuadNode(cell) {
         let node = cell.getNode();
         this.quadtree.remove(node);
+        this.activeCells.splice(this.activeCells.indexOf(cell), 1);
     }
 
     /**

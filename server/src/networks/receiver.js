@@ -1,8 +1,9 @@
-import Bomber from "../abilities/bomber";
-import Gravity from "../abilities/gravity";
-import Reflect from "../abilities/reflect";
-import Teleport from "../abilities/teleport";
-import Cells from "../players/cells";
+const Bomber = require("../abilities/bomber");
+const Gravity = require("../abilities/gravity");
+const Reflect = require("../abilities/reflect");
+const Teleport = require("../abilities/teleport");
+const Cells = require("../players/cells");
+
 
 const ABILITY_TYPE = {
     BOMBER: 0,
@@ -11,7 +12,7 @@ const ABILITY_TYPE = {
     TELEPORT: 3,
 }
 
-export class Receiver {
+class Receiver {
     constructor(ws) {
         this.ws = ws;
 
@@ -37,7 +38,7 @@ export class Receiver {
         if (!this.ws.player.isJoined) {
             const cells = new Cells(this.ws.player);
             cells.spawn();
-            this.ws.player.cells.push(cells);
+            this.ws.player.cellsArray.push(cells);
             this.ws.player.isJoined = true;
         }
     }
@@ -50,14 +51,14 @@ export class Receiver {
     }
 
     tabKeydown() {
-        if (this.ws.player.cells.length < 2) {
+        if (this.ws.player.cellsArray.length < 2) {
             const cells = new Cells(this.ws.player);
             cells.spawn();
-            this.ws.player.cells.push(cells);
+            this.ws.player.cellsArray.push(cells);
             this.ws.player.tabActive++;
         }
 
-        if (this.ws.player.tabActive < this.ws.player.cells.length) {
+        if (this.ws.player.tabActive < this.ws.player.cellsArray.length) {
             this.ws.player.tabActive++;
         } else {
             this.ws.player.tabActive = 0;
@@ -93,3 +94,5 @@ export class Receiver {
         }
     }
 }
+
+module.exports = Receiver;

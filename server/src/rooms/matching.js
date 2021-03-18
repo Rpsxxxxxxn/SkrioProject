@@ -1,3 +1,4 @@
+const Logger = require("../commons/logger");
 const Room = require("./room");
 
 class Matching {
@@ -8,12 +9,13 @@ class Matching {
     }
 
     create() {
-        this.rooms.push(new Room(this));
+        Logger.info("Create Matching");
+        this.createRoom();
     }
 
     destroy() {
-        this.waitingClients.clear();
-        this.rooms.clear();
+        this.waitingClients.length = 0;
+        this.rooms.length = 0;
     }
 
     update() {
@@ -22,7 +24,7 @@ class Matching {
             this.waitingClients.forEach(player => {
                 this.rooms[0].joinPlayer(player);
             })
-            this.waitingClients.clear();
+            this.waitingClients.length = 0;
         }
 
         // ルームの更新
@@ -33,6 +35,12 @@ class Matching {
 
     match() {
 
+    }
+
+    createRoom() {
+        const room = new Room(this);
+        room.create();
+        this.rooms.push(room);
     }
 
     /**

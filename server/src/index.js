@@ -1,5 +1,5 @@
 const GameCore = require("./gamecore");
 
-const gameCore = GameCore();
+const gameCore = new GameCore();
 gameCore.create();
 gameCore.update();
