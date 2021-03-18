@@ -1,5 +1,6 @@
 import { Cell } from "../entities/cell";
 import { Reader } from "../modules/reader";
+import { Writer } from "../modules/writer";
 import { Player } from "../players/player";
 
 export class Socket {
@@ -19,12 +20,26 @@ export class Socket {
         this.ws.onerror = this.onError.bind(this);
     }
 
+    wsSend(a) {
+        if (!this.ws) return;
+        if (this.ws.readyState != 1) return;
+        if (a.build) this.ws.send(a.build());
+        else this.ws.send(a.buffer);
+    }
+
     /**
      * サーバに接続した時
      * @param {*} ws 
      */
     onOpen(ws) {
         console.log("Socket Open");
+
+        const writer = new Writer();
+        writer.setUint8(0);
+        writer.setString("");
+        writer.setString("");
+        writer.setUint8(0);
+        this.wsSend(writer);
     }
 
     /**

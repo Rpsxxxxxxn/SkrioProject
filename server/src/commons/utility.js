@@ -1,3 +1,5 @@
+const Vector2 = require("./vector");
+
 class Utility {
     static rgbToHex(r, g, b) {
         const rgb = (r << 16) | (g << 8) | (b << 0);

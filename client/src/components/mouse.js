@@ -3,9 +3,11 @@ import { Vector2 } from "../modules/vector";
 export class Mouse {
     constructor() {
         this.position = Vector2.Zero();
+        this.zoom = 0.5;
         document.addEventListener("mousemove", this.onMouseMove.bind(this));
         document.addEventListener("mousedown", this.onMouseDown.bind(this));
         document.addEventListener("mouseup", this.onMouseUp.bind(this));
+        document.addEventListener("mousewheel", this.onMouseWheel.bind(this));
     }
 
     /**
@@ -30,6 +32,15 @@ export class Mouse {
      */
     onMouseUp(event) {
 
+    }
+
+    onMouseWheel(event) {
+        this.zoom *= Math.pow(.9, event.wheelDelta / -120 || event.detail || 0);
+        this.zoom = Math.min(Math.max(this.zoom, 0.1), 4);
+    }
+
+    getZoom() {
+        return this.zoom;
     }
 
     /**

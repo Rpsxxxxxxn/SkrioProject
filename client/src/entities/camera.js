@@ -4,6 +4,8 @@ export class Camera {
     constructor() {
         this.newPosition = Vector2.Zero();
         this.position = Vector2.Zero();
+        this.zoom = 1.0;
+        this.newZoom = 1.0;
     }
 
     update() {
@@ -14,11 +16,17 @@ export class Camera {
         this.newPosition.set(x, y);
     }
 
+    getPosition() {
+        return this.position;
+    }
+
     getWorldToScreen() {
 
     }
 
-    getScreenToWorld() {
-
+    getScreenToWorld(render, mouse) {
+        const x = (mouse.position.x - render.canvasWidth / 2) / mouse.viewZoom + this.position.x;
+        const y = (mouse.position.y - render.canvasHeight / 2) / mouse.viewZoom + this.position.y;
+        return new Vector2(x, y);
     }
 }

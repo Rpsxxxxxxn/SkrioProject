@@ -6,7 +6,9 @@ class Reader {
     }
 
     getUint8() {
-        return this.buffer.readUInt8(this.offset++);
+        const value = this.buffer.readUInt8(this.offset);
+        this.skipByte(1);
+        return value;
     }
 
     getUint16() {
@@ -28,7 +30,9 @@ class Reader {
     }
 
     getInt8() {
-        return this.buffer.readInt8(this.offset++);
+        const value = this.buffer.readInt8(this.offset);
+        this.skipByte(1);
+        return value;
     }
     
     getInt16() {
@@ -63,10 +67,10 @@ class Reader {
 
     getString() {
         let value = "";
-        const length = this.getUInt16();
-        for (let char = '', i = 0; i < length; i++) {
-            char = this.getUint16();
-            value += char.charAt(0);
+        const length = this.getUint16();
+        console.log(length)
+        for (let i = 0; i < length; i++) {
+            value += String.fromCharCode(this.getUint16());
         }
         return value;
     }

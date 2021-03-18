@@ -2,6 +2,7 @@ const Bomber = require("../abilities/bomber");
 const Gravity = require("../abilities/gravity");
 const Reflect = require("../abilities/reflect");
 const Teleport = require("../abilities/teleport");
+const Utility = require("../commons/utility");
 const Cells = require("../players/cells");
 
 
@@ -33,7 +34,7 @@ class Receiver {
     playGame(reader) {
         this.ws.player.team = Utility.stringSlice(reader.getString(), 10);
         this.ws.player.name = Utility.stringSlice(reader.getString(), 10);
-        this.ws.player.setAbility(reader.getUint8());
+        this.createAbility(reader.getUint8());
 
         if (!this.ws.player.isJoined) {
             const cells = new Cells(this.ws.player);
@@ -70,9 +71,7 @@ class Receiver {
         
     }
     
-    createAbility(reader) {
-        const type = reader.getUint8();
-
+    createAbility(type) {
         if (this.ws.player.ability) {
             delete this.ws.player.ability;
             this.ws.player.ability = null;

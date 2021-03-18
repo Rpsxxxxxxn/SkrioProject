@@ -58,8 +58,8 @@ class Player {
      */
     updateViewNodes(room) {
         if (this.cellsArray.length) {
-            const position = this.cellsArray[this.tabActive].viewPosition;
-            this.position.set(position.x, position.y); 
+            const activeCells = this.cellsArray[this.tabActive];
+            this.position.set(activeCells.viewPosition.x, viewPosition.y); 
     
             // カメラの設定
             this.newViewNodes = [];

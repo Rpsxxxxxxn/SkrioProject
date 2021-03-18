@@ -54,14 +54,10 @@ export class Writer {
     }
 
     setString(s) {
-        for (let i = 0; i < s.length; i++)
-            this.view.push(s.charCodeAt(i));
-    }
-
-    setStringEX(s) {
         this.setUint16(s.length);
-        for (let i = 0; i < s.length; i++)
+        for (let i = 0; i < s.length; i++) {
             this.setUint16(s.charCodeAt(i));
+        }
     }
 
     build() {

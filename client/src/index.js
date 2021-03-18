@@ -9,6 +9,7 @@ function initialize() {
 
 function mainloop() {
     gameCore.update();
+    gameCore.draw();
     requestAnimationFrame(mainloop);
 }
 window.onload = initialize;
