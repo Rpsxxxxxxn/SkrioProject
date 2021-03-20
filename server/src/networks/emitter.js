@@ -19,7 +19,6 @@ class Emitter {
         const writer = new Writer();
         writer.setUint8(0);
         writer.setUint32(this.ws.player.id);
-        console.log(this.ws.player.id)
         this.send(writer.toBuffer());
     }
 

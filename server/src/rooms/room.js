@@ -103,18 +103,21 @@ class Room {
 
     /**
      * プレイヤーの追加
-     * @param {*} client 
+     * @param {*} player 
      */
-    joinPlayer(client) {
-        this.clients.push(client);
+    joinPlayer(player) {
+        player.setRoom(this);
+        this.clients.push(player);
     }
 
     /**
      * プレイヤーの退出
-     * @param {*} client 
+     * @param {*} player 
      */
-    leavePlayer(client) {
-        this.clients.splice(this.clients.indexOf(client), 1);
+    leavePlayer(player) {
+        player.setRoom(null);
+        this.clients.splice(this.clients.indexOf(player), 1);
+        this.container.joinPlayer(player);
     }
 }
 

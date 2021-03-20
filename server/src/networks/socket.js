@@ -38,7 +38,9 @@ class Socket {
         ws.on("message", (msg) => {
             this.onMessage(msg, ws);
         });
-        ws.on("close", this.onClose.bind(this))
+        ws.on("close", (event) => {
+            this.onClose(event, ws);
+        })
         this.gamecore.matching.joinPlayer(ws.player);
     }
 
@@ -51,10 +53,9 @@ class Socket {
         ws.receiver.handle(reader);
     }
 
-    onClose(ws) {
-        ws.player.isConnected = false;
+    onClose(event, ws) {
+        ws.player.destroy();
         this.gamecore.matching.leavePlayer(ws.player);
-        ws.emit('close');
         ws.removeAllListeners();
     }
 

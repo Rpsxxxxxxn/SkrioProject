@@ -34,12 +34,6 @@ export class Socket {
     onOpen(ws) {
         console.log("Socket Open");
 
-        const writer = new Writer();
-        writer.setUint8(0);
-        writer.setString("");
-        writer.setString("");
-        writer.setUint8(0);
-        this.wsSend(writer);
     }
 
     /**

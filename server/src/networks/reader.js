@@ -1,3 +1,5 @@
+const Logger = require("../commons/logger");
+
 // Buffer.from
 class Reader {
     constructor(message) {
@@ -68,7 +70,7 @@ class Reader {
     getString() {
         let value = "";
         const length = this.getUint16();
-        console.log(length)
+        Logger.worn(length);
         for (let i = 0; i < length; i++) {
             value += String.fromCharCode(this.getUint16());
         }

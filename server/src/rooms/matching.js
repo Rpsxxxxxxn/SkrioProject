@@ -9,7 +9,7 @@ class Matching {
     }
 
     create() {
-        Logger.info("Create Matching");
+        Logger.info("Created Matching Server");
         this.createRoom();
     }
 
@@ -45,18 +45,18 @@ class Matching {
 
     /**
      * プレイヤーの参加
-     * @param {*} client 
+     * @param {*} player 
      */
-    joinPlayer(client) {
-        this.waitingClients.push(client);
+    joinPlayer(player) {
+        this.waitingClients.push(player);
     }
 
     /**
      * プレイヤーの退会
-     * @param {*} client 
+     * @param {*} player 
      */
-    leavePlayer(client) {
-        this.waitingClients.splice(this.waitingClients.indexOf(client), 1);
+    leavePlayer(player) {
+        this.waitingClients.splice(this.waitingClients.indexOf(player), 1);
     }
 }
 

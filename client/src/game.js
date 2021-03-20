@@ -3,6 +3,7 @@ import { Keyboard } from "./components/keyboard";
 import { Mouse } from "./components/mouse";
 import { Camera } from "./entities/Camera";
 import { Render } from "./modules/render";
+import { Writer } from "./modules/writer";
 import { Socket } from "./networks/socket";
 
 export class GameCore {
@@ -32,7 +33,14 @@ export class GameCore {
     }
 
     update() {
-
+        if (this.keyboard.getKeyPressed(40)) {
+            const writer = new Writer();
+            writer.setUint8(0);
+            writer.setString("");
+            writer.setString("");
+            writer.setUint8(0);
+            this.socket.wsSend(writer);
+        }
     }
 
     draw() {

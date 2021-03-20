@@ -37,9 +37,7 @@ class Receiver {
         this.createAbility(reader.getUint8());
 
         if (!this.ws.player.isJoined) {
-            const cells = new Cells(this.ws.player);
-            cells.spawn();
-            this.ws.player.cellsArray.push(cells);
+            this.ws.player.createCells();
             this.ws.player.isJoined = true;
         }
     }
@@ -53,9 +51,7 @@ class Receiver {
 
     tabKeydown() {
         if (this.ws.player.cellsArray.length < 2) {
-            const cells = new Cells(this.ws.player);
-            cells.spawn();
-            this.ws.player.cellsArray.push(cells);
+            this.ws.player.createCells();
             this.ws.player.tabActive++;
         }
 

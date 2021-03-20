@@ -22,12 +22,51 @@ class Cell {
     }
 
     destroy() {
-
+        this.component = null;
+        if (this.position) {
+            delete this.position;
+            this.position = null;
+        }
     }
 
-    update() {
-
+    update(position) {
+        this.move(position);
     }
+
+    move(target) {
+        const tx = target.position.x - this.position.x;
+        const ty = target.position.y - this.position.y;
+        const angle = Math.atan2(ty, tx);
+        
+        this.position.x += Math.cos(angle) * this.speed;
+        this.position.y += Math.sin(angle) * this.speed;
+    }
+
+    collision(cell) {
+        const eatMass = this.mass *= 1.25;
+        if (eatMass < cell.getMass()) return;
+        const distance = this.position.distance(cell.getPosition());
+        if (distance < this.size) {
+            this.setEat(cell);
+        }
+    }
+
+    rigidbody(cell) {
+        const radius = this.getSize() + cell.getSize();
+        const distance = this.position.distance(cell.getPosition());
+        const push = Math.min((radius - distance) / distance, radius - distance);
+        if (push / radius < 0) return;
+    
+        const ms = this.getSizeSquared() + cell.getSizeSquared();
+        const m1 = push * (cell.getSizeSquared() / ms);
+        const m2 = push * (this.getSizeSquared() / ms);
+        const direction = this.position.direction(cell.getPosition());
+
+        this.position.subtract(new Vector2(direction.x * m1, direction.y * m1));
+        cell.position.add(new Vector2(direction.x * m2, direction.y * m2));
+    }
+
+    // セッター ---------------------------------------------------------------------------
 
     newNode() {
         this.node = new Circle(this.position.x, this.position.y, this.size, this);
@@ -93,39 +132,6 @@ class Cell {
     getSplitedMass() {
         this.mass /= 2;
         return this.mass;
-    }
-
-    move(target) {
-        const tx = target.position.x - this.position.x;
-        const ty = target.position.y - this.position.y;
-        const angle = Math.atan2(ty, tx);
-        
-        this.position.x += Math.cos(angle) * this.speed;
-        this.position.y += Math.sin(angle) * this.speed;
-    }
-
-    collision(cell) {
-        const eatMass = this.mass *= 1.25;
-        if (eatMass < cell.getMass()) return;
-        const distance = this.position.distance(cell.getPosition());
-        if (distance < this.size) {
-            this.setEat(cell);
-        }
-    }
-
-    rigidbody(cell) {
-        const radius = this.getSize() + cell.getSize();
-        const distance = this.position.distance(cell.getPosition());
-        const push = Math.min((radius - distance) / distance, radius - distance);
-        if (push / radius < 0) return;
-    
-        const ms = this.getSizeSquared() + cell.getSizeSquared();
-        const m1 = push * (cell.getSizeSquared() / ms);
-        const m2 = push * (this.getSizeSquared() / ms);
-        const direction = this.position.direction(cell.getPosition());
-
-        this.position.subtract(new Vector2(direction.x * m1, direction.y * m1));
-        cell.position.add(new Vector2(direction.x * m2, direction.y * m2));
     }
 }
 

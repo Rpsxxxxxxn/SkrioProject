@@ -1,6 +1,8 @@
 const UserAccount = require("../commons/account");
 const { Box } = require('js-quadtree');
 const Vector2 = require("../commons/vector");
+const Cells = require("./cells");
+const Logger = require("../commons/logger");
 
 class Player {
     constructor(ws, id) {
@@ -8,7 +10,8 @@ class Player {
         this.isConnected = false;
         this.isJoined = false;
         this.account = new UserAccount();
-        this.ipAddress = "";
+        this.ipAddress = ws._socket.remoteAddress;
+        this.room = null;
 
         this.id = id;
         this.team = "";
@@ -28,35 +31,49 @@ class Player {
         }
     }
 
+    destroy() {
+        this.isConnected = false;
+        this.oldViewNodes.length = 0;
+        this.newViewNodes.length = 0;
+        this.cellsArray.length = 0;
+        if (this.room) {
+            delete this.room;
+            this.room = null;
+        }
+        if (this.ability) {
+            delete this.ability;
+            this.ability = null;
+        }
+    }
+
     /**
      * 更新処理
-     * @param {*} room 
      */
-    update(room) {
-        if (!this.isConnected || !this.isJoined) {
-
-        } else {
-            this.updateCells(room);
+    update() {
+        if (this.room != null) {
+            if (!this.isConnected || !this.isJoined) {
+    
+            } else {
+                this.updateCells();
+            }
+    
+            this.updateViewNodes();
         }
-
-        this.updateViewNodes(room);
     }
 
     /**
      * 細胞の更新処理
-     * @param {*} room 
      */
-    updateCells(room) {
+    updateCells() {
         this.cellsArray.forEach(cells => {
-            cells.update(room);
+            cells.update();
         });
     }
 
     /**
      * カメラに映っている細胞を取り出します
-     * @param {*} room 
      */
-    updateViewNodes(room) {
+    updateViewNodes() {
         if (this.cellsArray.length) {
             const activeCells = this.cellsArray[this.tabActive];
             this.position.set(activeCells.viewPosition.x, viewPosition.y); 
@@ -96,6 +113,18 @@ class Player {
     
             this.oldViewNodes = this.newViewNodes;
         }
+    }
+
+    createCells() {
+        if (this.room == null) return;
+        const cells = new Cells(this);
+        cells.setRoom(this.room);
+        cells.spawn();
+        this.cellsArray.push(cells);
+    }
+
+    setRoom(room) {
+        this.room = room;
     }
 }
 

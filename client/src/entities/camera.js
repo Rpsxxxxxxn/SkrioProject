@@ -25,8 +25,8 @@ export class Camera {
     }
 
     getScreenToWorld(render, mouse) {
-        const x = (mouse.position.x - render.canvasWidth / 2) / mouse.viewZoom + this.position.x;
-        const y = (mouse.position.y - render.canvasHeight / 2) / mouse.viewZoom + this.position.y;
-        return new Vector2(x, y);
+        const rx = (mouse.position.x - render.canvasWidth / 2) / mouse.viewZoom + this.position.x;
+        const ry = (mouse.position.y - render.canvasHeight / 2) / mouse.viewZoom + this.position.y;
+        return { x: rx, y: ry };
     }
 }
