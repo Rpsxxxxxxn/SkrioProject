@@ -1,5 +1,12 @@
 class Bot extends Player {
-    constructor(ws, id) {
-        super(ws, id);
+    constructor(id) {
+        super(null, id);
+
+        this.isConnected = true;
+        this.isJoined = true;        
+    }
+
+    update() {
+        super.update();
     }
 }

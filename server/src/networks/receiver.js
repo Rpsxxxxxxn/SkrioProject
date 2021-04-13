@@ -2,8 +2,8 @@ const Bomber = require("../abilities/bomber");
 const Gravity = require("../abilities/gravity");
 const Reflect = require("../abilities/reflect");
 const Teleport = require("../abilities/teleport");
-const Utility = require("../commons/utility");
-const Cells = require("../players/cells");
+const config = require("../commons/config");
+const Vector2 = require("../commons/vector");
 
 
 const ABILITY_TYPE = {
@@ -23,6 +23,8 @@ class Receiver {
             2: this.tabKeydown.bind(this),
             3: this.chatEmit.bind(this),
             4: this.createAbility.bind(this),
+            5: this.splitControl.bind(this),
+            8: this.ejectControl.bind(this)
         }
     }
 
@@ -32,33 +34,32 @@ class Receiver {
     }
 
     playGame(reader) {
-        this.ws.player.team = Utility.stringSlice(reader.getString(), 10);
-        this.ws.player.name = Utility.stringSlice(reader.getString(), 10);
+        this.ws.player.team = reader.getString();
+        this.ws.player.name = reader.getString();
         this.createAbility(reader.getUint8());
 
         if (!this.ws.player.isJoined) {
             this.ws.player.createCells();
             this.ws.player.isJoined = true;
+        } else {
+            this.ws.player.spawn();
         }
     }
 
     mouseControl(reader) {
-        let x = reader.getUint32();
-        let y = reader.getUint32();
+        let x = reader.getInt32();
+        let y = reader.getInt32();
         this.ws.player.zoomRange = reader.getFloat();
-        this.ws.player.mouse.set(x, y);
+        this.ws.player.mousePosition = new Vector2(x, y);
     }
 
     tabKeydown() {
-        if (this.ws.player.cellsArray.length < 2) {
+        if (this.ws.player.cellsArray.length < config.PLAYER_MAX_DUAL_COUNT) {
+            this.ws.player.tabActive += 1;
             this.ws.player.createCells();
-            this.ws.player.tabActive++;
-        }
-
-        if (this.ws.player.tabActive < this.ws.player.cellsArray.length) {
-            this.ws.player.tabActive++;
         } else {
-            this.ws.player.tabActive = 0;
+            this.ws.player.cellsArray[this.ws.player.tabActive].spawn();
+            this.ws.player.tabActiveCounter();
         }
     }
 
@@ -87,6 +88,14 @@ class Receiver {
                 this.ws.player.ability = new Teleport(this);
                 break;
         }
+    }
+
+    splitControl(reader) {
+        this.ws.player.split();
+    }
+    
+    ejectControl(reader) {
+        this.ws.player.eject();
     }
 }
 

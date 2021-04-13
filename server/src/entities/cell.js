@@ -1,4 +1,5 @@
-const { Circle } = require("js-quadtree");
+const config = require("../commons/config");
+const Utility = require("../commons/utility");
 const Vector2 = require("../commons/vector");
 
 // Eject 1
@@ -6,132 +7,148 @@ const Vector2 = require("../commons/vector");
 // PlayerCell 3
 // Virus 4
 class Cell {
-    constructor(component, type, x, y, mass, color) {
-        this.component = component;
-        this.type = type;
-        this.position = new Vector2(x, y);
-        this.mass = mass;
-        this.size = Math.sqrt(this.mass * 100);
-        this.color = color;
-        this.speed = 1.0;
+    constructor(component, type, id, x, y, mass, color) {
+        this._component = component;
+        this._type = type;
+        this._id = id;
+        this._position = new Vector2(x, y);
+        this._mass = mass;
+        this._size = Math.sqrt(this._mass * 100);
+        this._color = color;
+        this._speed = null;
+        this._createdTime = null;
 
-        this.splitAngle = 0.0;
-        this.splitSpeed = 1.0;
+        this._splitAngle = 0.0;
+        this._splitSpeed = 0.0;
     
-        this.node = null;
+        this._node = null;
     }
 
     destroy() {
-        this.component = null;
-        if (this.position) {
-            delete this.position;
-            this.position = null;
+        this._component = null;
+        if (this._position) {
+            delete this._position;
+            this._position = null;
         }
     }
 
-    update(position) {
-        this.move(position);
+    update(param) {
+        if (this._node.width != this._size ||
+            this._node.height != this._size) {
+            this._size = Math.sqrt(this._mass * 100);
+        }
+        this._position.x = Number.isNaN(this._position.x) ? 0 : this._position.x;
+        this._position.y = Number.isNaN(this._position.y) ? 0 : this._position.y;
+        this._position.x = Utility.clamp(this._position.x, 0, config.FIELD_SIZE);
+        this._position.y = Utility.clamp(this._position.y, 0, config.FIELD_SIZE);
     }
 
-    move(target) {
-        const tx = target.position.x - this.position.x;
-        const ty = target.position.y - this.position.y;
-        const angle = Math.atan2(ty, tx);
-        
-        this.position.x += Math.cos(angle) * this.speed;
-        this.position.y += Math.sin(angle) * this.speed;
-    }
-
-    collision(cell) {
-        const eatMass = this.mass *= 1.25;
-        if (eatMass < cell.getMass()) return;
-        const distance = this.position.distance(cell.getPosition());
-        if (distance < this.size) {
-            this.setEat(cell);
+    collision(room, cell) {
+        const eatMass = this._mass * config.CELL_EAT_RATE;
+        if (eatMass < cell.mass) return;
+        const distance = this._position.distance(cell.position);
+        if (distance < this._size) {
+            this.setEat(room, cell);
         }
     }
 
-    rigidbody(cell) {
-        const radius = this.getSize() + cell.getSize();
-        const distance = this.position.distance(cell.getPosition());
+    rigidbody(room, cell) {
+        const radius = this.size + cell.size;
+        const distance = this.position.distance(cell.position);
         const push = Math.min((radius - distance) / distance, radius - distance);
         if (push / radius < 0) return;
+        // this._splitSpeed *= 0.5;
     
-        const ms = this.getSizeSquared() + cell.getSizeSquared();
-        const m1 = push * (cell.getSizeSquared() / ms);
-        const m2 = push * (this.getSizeSquared() / ms);
-        const direction = this.position.direction(cell.getPosition());
+        const ms = this.sizeSquared + cell.sizeSquared;
+        const m1 = push * (cell.sizeSquared / ms);
+        const m2 = push * (this.sizeSquared / ms);
+        const direction = this.position.direction(cell.position);
 
         this.position.subtract(new Vector2(direction.x * m1, direction.y * m1));
         cell.position.add(new Vector2(direction.x * m2, direction.y * m2));
     }
 
+    splitMove() {
+        if (this._splitSpeed >= 1) {
+            let speed = Math.sqrt(this._splitSpeed * this._splitSpeed / 100);
+            speed = Math.min(speed, config.PLAYER_SPLIT_DISTANCE);
+            speed = Math.min(speed, this._splitSpeed);
+            this._splitSpeed -= speed;
+            this._position.x += Math.cos(this._splitAngle) * speed;
+            this._position.y += Math.sin(this._splitAngle) * speed;
+        }
+    }
     // セッター ---------------------------------------------------------------------------
 
-    newNode() {
-        this.node = new Circle(this.position.x, this.position.y, this.size, this);
+    setNewNode() {
+        this.node = {
+            x: this._position.x - this._size,
+            y: this._position.y - this._size,
+            width: this._size * 2,
+            height: this._size * 2,
+            cell: this,
+        }
     }
 
-    setNode(node) {
-        this.node = node;
-    }
-
-    getNode() {
-        return this.node;
-    }
-
-    setEat(cell) {
-
-    }
-
-    setKiller(cell) {
-        const player = cell.component.player;
-    }
-
-    setType(type) {
-        this.type = type;
-    }
-
-    setPosition(x, y) {
-        this.position.set(x, y);
-    }
-
-    setMass(mass) {
-        this.mass = mass;
-    }
-
-    setSize(size) {
-        this.size = size;
-    }
-
-    setColor(value) {
-        this.color = value;
+    setEat(room, cell) {
+        this._mass += cell.mass;
+        if (cell.component != null && cell.type == 3) {
+            cell.component.removeCell(cell);
+        }
+        room.removeQuadNode(cell);
     }
 
     setSplitParams(value) {
-        this.splitAngle = value;
-        this.splitSpeed = 1.0;
+        this._splitAngle = value;
+        this._splitSpeed = config.PLAYER_SPLIT_DISTANCE;
     }
 
-    getPosition() {
-        return this.position;
+    getTick(room) {
+        return (room.tickTimer - this.createdTime);
     }
 
-    getSize() {
-        return Math.sqrt(this.mass * 100);
+    // アクセッサプロパティ 
+    set component(value) { this._component = value; };
+    get component() { return this._component; };
+
+    set id(value) { this._id = value; };
+    get id() { return this._id; };
+
+    set node(value) {  this._node = value; }
+    get node() { return this._node; }
+
+    set type(value) { this._type = value; }
+    get type() { return this._type; }
+
+    set position(value) { this._position = value; }
+    get position() { return this._position; }
+
+    set mass(value) { this._mass = value; }
+    get mass() { return this._mass; }
+
+    set size(value) { this._size = value; }
+    get size() { return this._size; };
+
+    set createdTime(value) { this._createdTime = value; };
+    get createdTime() { return this._createdTime; }
+
+    set speed(value) { this._speed = value; }
+    get speed() {
+        var speed = 2.1106 / Math.pow(this.size, 0.449);
+        this._speed = speed * config.SERVER_LOOP_TIME;
+        return this._speed;
     }
+
+    set color(value) { this._color = value; }
+    get color() { return this._color; };
+
+    set splitAngle(value) { this._splitAngle = value; };
+    get splitAngle() { return this._splitAngle; };
     
-    getSizeSquared() {
-        return this.size * this.size;
-    }
-
-    getMass() {
-        return this.mass;
-    }
-    
-    getSplitedMass() {
-        this.mass /= 2;
-        return this.mass;
+    get sizeSquared() { return this._size * this._size; };
+    get splitedMass() {
+        this._mass /= 2;
+        return this._mass;
     }
 }
 

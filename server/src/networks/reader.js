@@ -70,7 +70,6 @@ class Reader {
     getString() {
         let value = "";
         const length = this.getUint16();
-        Logger.worn(length);
         for (let i = 0; i < length; i++) {
             value += String.fromCharCode(this.getUint16());
         }

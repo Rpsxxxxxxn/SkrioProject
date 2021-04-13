@@ -6,6 +6,12 @@ export class Keyboard {
         document.addEventListener("keyup", this.onKeyUp.bind(this));
     }
 
+    update() {
+        for (let i = 0; i < 256; i++) {
+            this.oldkey[i] = this.newkey[i];
+        }
+    }
+
     /**
      * キーの押し込み
      * @param {*} event 
@@ -13,7 +19,6 @@ export class Keyboard {
     onKeyDown(event) {
         for (let i = 0; i < 256; i++) {
             if (event.keyCode == i) {
-                this.oldkey[i] = this.newkey[i];
                 this.newkey[i] = true;
             }
         }
@@ -26,7 +31,6 @@ export class Keyboard {
     onKeyUp(event) {
         for (let i = 0; i < 256; i++) {
             if (event.keyCode == i) {
-                this.oldkey[i] = this.newkey[i];
                 this.newkey[i] = false;
             }
         }

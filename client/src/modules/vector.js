@@ -69,6 +69,10 @@ export class Vector2 {
         this.y = Math.max(Math.min(this.y, max), min);
     }
 
+    clear() {
+        this.x = this.y = 0;
+    }
+
     static lerp(a, b, t) {
         return new Vector2(
             a.x + (b.x - a.x) * t,

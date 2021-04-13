@@ -1,3 +1,4 @@
+const Logger = require("../commons/logger");
 const Writer = require("./writer");
 
 class Emitter {
@@ -6,6 +7,8 @@ class Emitter {
     }
 
     create() {
+        Logger.debug("Create Player Emitter");
+        
         this.addPlayerQueue = [];
         this.updatePlayerQueue = [];
         this.deletePlayerQueue = [];
@@ -22,8 +25,24 @@ class Emitter {
         this.send(writer.toBuffer());
     }
 
+    updateViewPosition(client) {
+        const writer = new Writer();
+        writer.setUint8(1);
+        writer.setFloat(client.position.x);
+        writer.setFloat(client.position.y);
+        this.send(writer.toBuffer());
+    }
+
+    updateSpectateViewPosition(client) {
+        const writer = new Writer();
+        writer.setUint8(1);
+        writer.setFloat(client.position.x);
+        writer.setFloat(client.position.y);
+        return writer.toBuffer();
+    }
+
     // 10 -------------------------------------------------
-    playerUpdate() {
+    updatePlayer() {
         const writer = new Writer();
         writer.setUint8(10);
 
@@ -55,20 +74,21 @@ class Emitter {
     }
 
     // 11 -------------------------------------------------
-    cellUpdate() {
+    updateCell() {
         const writer = new Writer();
         writer.setUint8(11);
 
         // ADD
         writer.setUint16(this.addCellQueue.length);
         this.addCellQueue.forEach((cell) => {
-            writer.setUint16(cell.id);
-            writer.setUint16(cell.type);
-            writer.setUint16(cell.position.x);
-            writer.setUint16(cell.position.y);
+            writer.setUint32(cell.id);
+            writer.setUint8(cell.type);
+            writer.setFloat(cell.position.x);
+            writer.setFloat(cell.position.y);
             writer.setUint16(cell.size);
+            writer.setString(cell.color);
             if (cell.type == 3) {
-                writer.setUint16(cell.player.id);
+                writer.setUint16(cell.component.player.id);
             }
         })
         this.addCellQueue.length = 0;
@@ -76,13 +96,13 @@ class Emitter {
         // UPDATE
         writer.setUint16(this.updateCellQueue.length);
         this.updateCellQueue.forEach((cell) => {
-            writer.setUint16(cell.id);
-            writer.setUint16(cell.type);
-            writer.setUint16(cell.position.x);
-            writer.setUint16(cell.position.y);
-            writer.setUint16(cell.size);
+            writer.setUint32(cell.id);
+            writer.setUint8(cell.type);
+            writer.setFloat(cell.position.x);
+            writer.setFloat(cell.position.y);
+            writer.setUint16(cell.size >>> 0);
             if (cell.type == 3) {
-                writer.setUint16(cell.player.id);
+                writer.setUint16(cell.component.player.id);
             }
         })
         this.updateCellQueue.length = 0;
@@ -90,10 +110,10 @@ class Emitter {
         // DELETE
         writer.setUint16(this.deleteCellQueue.length);
         this.deleteCellQueue.forEach((cell) => {
-            writer.setUint16(cell.id);
-            writer.setUint16(cell.type);
+            writer.setUint32(cell.id);
+            writer.setUint8(cell.type);
             if (cell.type == 3) {
-                writer.setUint16(cell.player.id);
+                writer.setUint16(cell.component.player.id);
             }
         })
         this.deleteCellQueue.length = 0;
@@ -102,9 +122,26 @@ class Emitter {
     }
 
     // 12 -------------------------------------------------
-    updateTeamMember() {
+    updateTeamMember(clients) {
+        clients.forEach((client) => {
+            const writer = new Writer();
+            writer.setUint8(40);
+            writer.setUint32(client.id);
+            writer.setFloat(client.position.x);
+            writer.setFloat(client.position.y);
+        })
+        this.send(writer.toBuffer());
+    }
+
+
+    updateLeaderBoard(clients) {
         const writer = new Writer();
-        return writer.toBuffer();
+        writer.setUint8(13);
+        clients.forEach((client) => {
+            writer.setUint32(client.id);
+            writer.setString(client.name);
+        })
+        this.send(writer.toBuffer());
     }
 
     // 20 -------------------------------------------------

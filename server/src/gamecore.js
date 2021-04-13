@@ -1,3 +1,4 @@
+const config = require("./commons/config");
 const Logger = require("./commons/logger");
 const Socket = require("./networks/socket");
 const Matching = require("./rooms/matching");
@@ -31,7 +32,7 @@ class GameCore {
     update() {
         this.matching.update();
         
-        setTimeout(this.update.bind(this), 1000/25);
+        setTimeout(this.update.bind(this), config.SERVER_LOOP_TIME);
     }
 }
 

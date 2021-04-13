@@ -1,30 +1,34 @@
 const UserAccount = require("../commons/account");
-const { Box } = require('js-quadtree');
 const Vector2 = require("../commons/vector");
 const Cells = require("./cells");
 const Logger = require("../commons/logger");
+const config = require("../commons/config");
+const Utility = require("../commons/utility");
 
 class Player {
     constructor(ws, id) {
+        // public
         this.ws = ws;
         this.isConnected = false;
         this.isJoined = false;
         this.account = new UserAccount();
         this.ipAddress = ws._socket.remoteAddress;
-        this.room = null;
 
-        this.id = id;
-        this.team = "";
-        this.name = "";
-        this.ability = null;
-        this.tabActive = 0;
-        this.cellsArray = [];
-        this.zoomRange = 1.0;
-
+        // private
+        this._id = id;
+        this._team = "";
+        this._name = "";
+        this._ability = null;
+        this._tabActive = 0;
+        this._cellsArray = [];
+        this._zoomRange = 1.0;
+        this._room = null;
+        this._totalMass = 0;
+        
         // Camera
-        this.position = new Vector2(0, 0);
-        this.oldViewNodes = [];
-        this.newViewNodes = [];
+        this._position = new Vector2(0, 0);
+        this._oldViewNodes = [];
+        this._newViewNodes = [];
 
         if (!this.isConnected) {
             this.isConnected = true;
@@ -32,17 +36,20 @@ class Player {
     }
 
     destroy() {
+        this._cellsArray.forEach((cells) => {
+            cells.destroy();
+        });
         this.isConnected = false;
-        this.oldViewNodes.length = 0;
-        this.newViewNodes.length = 0;
-        this.cellsArray.length = 0;
-        if (this.room) {
-            delete this.room;
-            this.room = null;
+        this._oldViewNodes.length = 0;
+        this._newViewNodes.length = 0;
+        this._cellsArray.length = 0;
+        if (this._room) {
+            delete this._room;
+            this._room = null;
         }
-        if (this.ability) {
-            delete this.ability;
-            this.ability = null;
+        if (this._ability) {
+            delete this._ability;
+            this._ability = null;
         }
     }
 
@@ -50,7 +57,7 @@ class Player {
      * 更新処理
      */
     update() {
-        if (this.room != null) {
+        if (this._room != null) {
             if (!this.isConnected || !this.isJoined) {
     
             } else {
@@ -65,7 +72,7 @@ class Player {
      * 細胞の更新処理
      */
     updateCells() {
-        this.cellsArray.forEach(cells => {
+        this._cellsArray.forEach(cells => {
             cells.update();
         });
     }
@@ -74,35 +81,42 @@ class Player {
      * カメラに映っている細胞を取り出します
      */
     updateViewNodes() {
-        if (this.cellsArray.length) {
-            const activeCells = this.cellsArray[this.tabActive];
-            this.position.set(activeCells.viewPosition.x, viewPosition.y); 
+        if (this._cellsArray.length) {
+            const activeCells = this._cellsArray[this._tabActive];
+            this._position.set(activeCells.viewPosition.x, activeCells.viewPosition.y); 
     
+            // 位置送信
+            this.ws.emitter.updateViewPosition(this);
+
+            // カメラの広さ計算
+            this.updateViewScale();
+
             // カメラの設定
-            this.newViewNodes = [];
-            const viewBox = new Box(
-                this.position.x - 500,
-                this.position.y - 500,
-                1000,
-                1000
-            );
+            this._newViewNodes = [];
+            const viewBox = {
+                x: this._position.x - (config.PLAYER_VIEW_SIZE / this._scale),
+                y: this._position.y - (config.PLAYER_VIEW_SIZE / this._scale),
+                width: ((config.PLAYER_VIEW_SIZE * 2) / this._scale),
+                height: ((config.PLAYER_VIEW_SIZE * 2) / this._scale)
+            };
     
             // 実際に映っている細胞の産出
-            const newViewCells = room.query(viewBox);
-            newViewCells.forEach(cell => {
-                this.newViewNodes.push(cell.data);
+            const newViewCells = this._room.colliding(viewBox);
+            newViewCells.forEach(data => {
+                this._newViewNodes.push(data.cell);
             })
-            this.newViewNodes.sort((a, b) => { return a.id - b.id });
+
+            this._newViewNodes.sort((a, b) => { return a.id - b.id });
     
             // 追加と更新と削除を調べる
-            let groupNodes = this.newViewNodes.concat(this.oldViewNodes)
+            let groupNodes = this._newViewNodes.concat(this._oldViewNodes)
             groupNodes.forEach(item => {
                 // Add
-                if (this.newViewNodes.includes(item) && !this.oldViewNodes.includes(item)) {
+                if (this._newViewNodes.includes(item) && !this._oldViewNodes.includes(item)) {
                     this.ws.emitter.addCellQueue.push(item);
                 } 
                 // Delete
-                else if (!this.newViewNodes.includes(item) && this.oldViewNodes.includes(item)) {
+                else if (!this._newViewNodes.includes(item) && this._oldViewNodes.includes(item)) {
                     this.ws.emitter.deleteCellQueue.push(item);
                 } 
                 // Update
@@ -111,21 +125,104 @@ class Player {
                 }
             });
     
-            this.oldViewNodes = this.newViewNodes;
+            this._oldViewNodes = this._newViewNodes;
         }
     }
 
     createCells() {
-        if (this.room == null) return;
+        if (this._room == null) return;
         const cells = new Cells(this);
-        cells.setRoom(this.room);
+        cells.room = this._room;
+        cells.id = this._tabActive;
         cells.spawn();
-        this.cellsArray.push(cells);
+        this._cellsArray.push(cells);
     }
 
-    setRoom(room) {
-        this.room = room;
+    tabActiveCounter() {
+        this.ws.player.tabActive++;
+        if (this.ws.player.tabActive >= this.ws.player.cellsArray.length) {
+            this.ws.player.tabActive = 0;
+        }
     }
+
+    split() {
+        if (this._cellsArray.length) {
+            this._cellsArray[this._tabActive].split();
+        }
+    }
+    
+    eject() {
+        if (this._cellsArray.length) {
+            this._cellsArray[this._tabActive].eject();
+        }
+    }
+
+    updateViewScale() {
+        let totalSize = 0;
+        this._totalMass = 0;
+        this._cellsArray[this._tabActive].cells.forEach((cell)=>{
+            totalSize += cell.size;
+            this._totalMass += cell.mass;
+        })
+        this._scale = Math.pow(Math.min(64 / totalSize, 1), config.PLAYER_VIEW_SCALE);
+    }
+
+    // アクセッサプロパティ
+    set id(value) { this._id = value; }
+    get id() { return this._id; };
+
+    set team(value) { 
+        this._team = Utility.stringSlice(value, 10); 
+    }
+    get team() { 
+        return this._team; 
+    };
+
+    set name(value) { 
+        this._name = Utility.stringSlice(value, 10);
+    }
+    get name() { 
+        return this._name; 
+    };
+
+    set ability(value) { this._ability = value; }
+    get ability() { return this._ability; };
+    
+    set tabActive(value) { this._tabActive = value; }
+    get tabActive() { return this._tabActive; };
+    
+    set cellsArray(value) { this._cellsArray = value; }
+    get cellsArray() { return this._cellsArray; };
+    
+    set zoomRange(value) { this._zoomRange = value; }
+    get zoomRange() { return this._zoomRange; };
+
+    set room(value) { this._room = value; }
+    get room() { return this._room; };
+    
+    set position(value) { this._position = value; }
+    get position() { return this._position; };
+    
+    set totalMass(value) { this._totalMass = value; }
+    get totalMass() { return this._totalMass; };
+    
+    set newViewNodes(value) { this._newViewNodes = value; }
+    get newViewNodes() { return this._newViewNodes; };
+    
+    set oldViewNodes(value) { this._oldViewNodes = value; }
+    get oldViewNodes() { return this._oldViewNodes; };
+    
+    set mousePosition(value) { 
+        if (this._cellsArray.length) {
+            this._cellsArray[this._tabActive].mousePosition = value;
+        }
+    }
+    get mousePosition() { 
+        if (this._cellsArray.length) {
+            return this._cellsArray[this._tabActive].mousePosition;
+        }
+        return null;
+    };
 }
 
 module.exports = Player;

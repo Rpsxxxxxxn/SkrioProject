@@ -9,7 +9,7 @@ export class Camera {
     }
 
     update() {
-        this.position = Vector2.lerp(this.newPosition, this.position, 0.03);
+        this.position = Vector2.lerp(this.position, this.newPosition, 0.1);
     }
 
     setPosition(x, y) {
@@ -25,8 +25,8 @@ export class Camera {
     }
 
     getScreenToWorld(render, mouse) {
-        const rx = (mouse.position.x - render.canvasWidth / 2) / mouse.viewZoom + this.position.x;
-        const ry = (mouse.position.y - render.canvasHeight / 2) / mouse.viewZoom + this.position.y;
+        const rx = (mouse.position.x - render.canvasWidth / 2) / mouse.zoom + this.position.x;
+        const ry = (mouse.position.y - render.canvasHeight / 2) / mouse.zoom + this.position.y;
         return { x: rx, y: ry };
     }
 }

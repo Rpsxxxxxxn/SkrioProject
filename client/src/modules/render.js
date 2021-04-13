@@ -47,6 +47,20 @@ export class Render {
         this.context.closePath();
     }
 
+    zoomScaling(position, zoom) {
+        this.context.translate(this.canvasWidth / 2, this.canvasHeight / 2);
+        this.context.scale(zoom, zoom);
+        this.context.translate(-position.x, -position.y);
+    }
+
+    save() {
+        this.context.save();
+    }
+
+    restore() {
+        this.context.restore();
+    }
+
     drawGrid(position, zoom) {
         this.context.save();
         this.context.strokeStyle = "#ffffff";

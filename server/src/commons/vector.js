@@ -56,6 +56,12 @@ class Vector2 {
         return result;
     }
 
+    length(value) {
+        const x = value.x - this.x;
+        const y = value.y - this.y;
+        return new Vector2(x, y);
+    }
+
     distance(value) {
         let tx = value.x - this.x;
         let ty = value.y - this.y;

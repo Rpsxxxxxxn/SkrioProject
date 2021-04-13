@@ -1,15 +1,24 @@
 class Timer {
     constructor(interval) {
-        this.interval = interval;
-        this.saveTime = Date.now();
+        this._interval = interval;
+        this._scale = 1.0;
+        this._saveTime = Date.now();
     }
 
     getTiming() {
-        if ((Date.now() - this.saveTime) > this.interval) {
-            this.saveTime = Date.now();
+        if ((Date.now() - this._saveTime) > this._interval) {
+            this._saveTime = Date.now();
             return true;
         }
         return false;
+    }
+
+    get deltaTime() {
+        return (Date.now() - this._saveTime);
+    }
+
+    get scaleTime() {
+        return this.deltaTime * this._scale;
     }
 }
 

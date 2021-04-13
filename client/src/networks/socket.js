@@ -12,7 +12,7 @@ export class Socket {
      * ソケットの生成
      */
     create() {
-        this.ws = new WebSocket("ws://localhost:3000");
+        this.ws = new WebSocket("ws://118.27.105.43:3000");
         this.ws.binaryType = "arraybuffer";
         this.ws.onopen = this.onOpen.bind(this);
         this.ws.onmessage = this.onMessage.bind(this);
@@ -33,7 +33,6 @@ export class Socket {
      */
     onOpen(ws) {
         console.log("Socket Open");
-
     }
 
     /**
@@ -46,6 +45,9 @@ export class Socket {
         switch (type) {
             case 0: // クライアントのID
                 this.setId(reader);
+                break;
+            case 1: // カメラ位置
+                this.updateViewPosition(reader);
                 break;
             case 10: // Playerの追加、更新、削除
                 this.addPlayer(reader);
@@ -93,7 +95,16 @@ export class Socket {
     setId(reader) {
         let id = reader.getUint32();
         this.gamecore.playerId = id;
-        console.log(id);
+    }
+
+    /**
+     * カメラ位置の更新
+     * @param {*} reader 
+     */
+    updateViewPosition(reader) {
+        const x = reader.getFloat();
+        const y = reader.getFloat();
+        this.gamecore.camera.setPosition(x, y);
     }
 
     /**
@@ -108,6 +119,9 @@ export class Socket {
             const name = reader.getString();
             const player = new Player(this.gamecore, id, team, name);
             this.gamecore.allPlayers.setData(id, player);
+            if (this.gamecore.playerId == id) {
+                this.gamecore.player = player;
+            }
         }
     }
 
@@ -138,29 +152,27 @@ export class Socket {
         }
     }
 
+    
     /**
      * セルの追加
      * @param {*} reader 
      */
     addCell(reader) {
         const cellCount = reader.getUint16();
-        
-        // Cell
         for (let i = 0; i < cellCount; i++) {
             const cellId = reader.getUint32();
             const cellType = reader.getUint8();
             const x = reader.getFloat();
             const y = reader.getFloat();
             const size = reader.getUint16();
-
-            // PlayerCellならば
+            const color = reader.getString();
             if (cellType == 3) {
                 const playerid = reader.getUint16();
                 const player = this.gamecore.allPlayers.getData(playerid);
-                player.addCell(cellId, cellType, x, y, size);
-                this.gamecore.allPlayers.setData(id, player);
+                player.addCell(cellId, cellType, x, y, size, color);
+                this.gamecore.allPlayers.setData(playerid, player);
             } else {
-                const cell = new Cell(null, cellId, cellType, x, y, size, "yellow");
+                const cell = new Cell(null, cellId, cellType, x, y, size, color);
                 this.gamecore.viewCells.push(cell);
             }
         }
@@ -171,23 +183,24 @@ export class Socket {
      * @param {*} reader 
      */
     updateCell(reader) {
-        const playerid = reader.getUint16();
         const cellCount = reader.getUint16();
-        
         for (let i = 0; i < cellCount; i++) {
             const cellId = reader.getUint32();
             const cellType = reader.getUint8();
             const x = reader.getFloat();
             const y = reader.getFloat();
             const size = reader.getUint16();
-
             if (cellType == 3) {
+                const playerid = reader.getUint16();
                 const player = this.gamecore.allPlayers.getData(playerid);
-                player.updateCell(cellId, x, y, size);
-                this.gamecore.allPlayers.setData(id, player);
+                if (player != undefined) {
+                    player.updateCell(cellId, x, y, size);
+                }
             } else {
                 const cell = this.gamecore.viewCells.find(element => element.id == cellId);
-                cell.update(x, y, size);
+                if (cell !== undefined) {
+                    cell.update(x, y, size);
+                }
             }
         }
     }
@@ -197,14 +210,12 @@ export class Socket {
      * @param {*} reader 
      */
     deleteCell(reader) {
-        const playerid = reader.getUint16();
         const cellCount = reader.getUint16();
-        
         for (let i = 0; i < cellCount; i++) {
             const cellId = reader.getUint32();
             const cellType = reader.getUint8();
-
             if (cellType == 3) {
+                const playerid = reader.getUint16();
                 const player = this.gamecore.allPlayers.getData(playerid);
                 player.deleteCell(cellId);
                 this.gamecore.allPlayers.setData(cellId, player);

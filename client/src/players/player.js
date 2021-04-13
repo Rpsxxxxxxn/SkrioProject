@@ -23,7 +23,6 @@ export class Player {
     }
 
     draw(render) {
-        
     }
 
     destroy() {
@@ -39,8 +38,8 @@ export class Player {
      * @param {*} size 
      * @param {*} color 
      */
-    addCell(id, x, y, size, color) {
-        const cell = new Cell(this, id, x, y, size, color);
+    addCell(id, type, x, y, size, color) {
+        const cell = new Cell(this, id, type, x, y, size, color);
         this.cells.push(cell);
         this.gamecore.viewCells.push(cell);
     }
@@ -62,9 +61,10 @@ export class Player {
      * @param {*} id 
      */
     deleteCell(id) {
-        const index = this.cells.findIndex((v) => v.id == id);
+        let index = this.cells.findIndex((v) => v.id == id);
         this.cells.splice(index, 1);
-        this.gamecore.splice(index, 1);
+        index = this.gamecore.viewCells.findIndex((v) => v.id == id);
+        this.gamecore.viewCells.splice(index, 1);
     }
     
     /**

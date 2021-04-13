@@ -1,8 +1,12 @@
 const Cell = require("./cell");
 
 class Pellet extends Cell {
-    constructor(component, x, y, mass, color) {
-        super(component, 2, x, y, mass, color);
+    constructor(id, x, y, mass, color) {
+        super(null, 2, id, x, y, mass, color);
+    }
+
+    update(param) {
+        super.update(param);
     }
 }
 

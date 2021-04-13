@@ -1,3 +1,4 @@
+const config = require("./config");
 const Vector2 = require("./vector");
 
 class Utility {
@@ -27,15 +28,15 @@ class Utility {
     
     static getRandomPosition() {
         const value = new Vector2(0, 0);
-        value.x = (Math.random() * 0xffff) % 14142;
-        value.y = (Math.random() * 0xffff) % 14142;
+        value.x = (Math.random() * 0xffff) % config.FIELD_SIZE;
+        value.y = (Math.random() * 0xffff) % config.FIELD_SIZE;
         return value;
     }
 
     static getRandomColor() {
-        const r = this.clamp(Math.random() * 255, 200, 255);
-        const g = this.clamp(Math.random() * 255, 200, 255);
-        const b = this.clamp(Math.random() * 255, 200, 255);
+        const r = this.clamp(Math.random() * 255, 100, 255);
+        const g = this.clamp(Math.random() * 255, 100, 255);
+        const b = this.clamp(Math.random() * 255, 100, 255);
         return this.rgbToHex(r, g, b);
     }
 }
