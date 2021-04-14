@@ -14,17 +14,22 @@ class Room {
         this._counter = 0;
         this._tickTimer = 0;
         this._isLock = isLock;
+
+        this._saveTime = null;
+        this._chatHistory = [];
     }
 
     create() {
         Logger.info("Create Room");
 
+        // 粒出し処理
         for (let i = 0; i < config.FOOD_COUNT; i++) {
             const position = Utility.getRandomPosition();
-            const cell = new Pellet(this.counter, position.x, position.y, 20, Utility.getRandomColor());
+            const cell = new Pellet(this.counter, position.x, position.y, config.FOOD_SIZE, Utility.getRandomColor());
             this.addQuadNode(cell);
         }
 
+        // 一秒ごとに行う処理
         setInterval(this.updateInterval.bind(this), 1000);
     }
 
@@ -136,10 +141,13 @@ class Room {
             if (cell.type === 3) {
                 for (let i = 0; i < items.length; i++) {
                     const cellTarget = items[i].cell;
+                    // 本体と相手が同じならスキップ
                     if (cell.id === cellTarget.id) continue;
+                    // 相手がプレイやー以外なら
                     if (cellTarget.component === null) {
                         cell.collision(this, cellTarget);
                     } else {
+                        // 相手がプレイヤー
                         if (cellTarget.component.player.id !== cell.component.player.id ||
                             cellTarget.component.id !== cell.component.id) {
                             cell.collision(this, cellTarget);
@@ -159,8 +167,8 @@ class Room {
         this.clients.forEach((client) => {
             leaderboard.push(client);
         })
-        leaderboard.sort((a, b) => { return a.totalMass - b.totalMass });
-        leaderboard.slice(0, 10);
+        leaderboard.sort((a, b) => { return b.totalMass - a.totalMass });
+        leaderboard.slice(0, config.LEADERBOARD_MAX);
         
         this.clients.forEach((client) => {
             client.ws.emitter.updateLeaderBoard(leaderboard);
@@ -170,7 +178,7 @@ class Room {
         this._activeCells.forEach((cell) => {
             if (cell.type === 3) {
                 if (cell.mass > config.CELL_MIN_MASS) {
-                    cell.mass *= 0.998;
+                    cell.mass *= config.PLAYER_CELL_DECAY;
                 }
             }
         });
@@ -187,17 +195,30 @@ class Room {
     }
 
     /**
+     * チャットの履歴
+     * @param {*} message 
+     */
+    addChatHistory(name, message) {
+        this._chatHistory.push({ name, message });
+        if (this._chatHistory.length > 10) {
+            this._chatHistory.pop();
+        }
+    }
+
+    /**
      * プレイヤーの追加
      * @param {*} player 
      */
     joinPlayer(player) {
+        // プレイヤー情報の送信
         this._clients.forEach((client) => {
             player.ws.emitter.addPlayerQueue.push(client);
         })
         player.ws.emitter.addPlayerQueue.push(player);
-        
-        this._clients.forEach((client) => {
-            client.ws.emitter.addPlayerQueue.push(player);
+
+        // チャット履歴 送信
+        this._chatHistory.forEach((info) => {
+            player.ws.emitter.chatMessage(info.name, info.message);
         })
 
         player.room = this;
@@ -253,6 +274,14 @@ class Room {
             } 
         }
         return false;
+    }
+    
+    get deltaTime() {
+        return (Date.now() - this._saveTime);
+    }
+
+    get scaleTime() {
+        return this.deltaTime * this._scale;
     }
 }
 

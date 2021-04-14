@@ -12,7 +12,7 @@ export class Socket {
      * ソケットの生成
      */
     create() {
-        this.ws = new WebSocket("ws://118.27.105.43:3000");
+        this.ws = new WebSocket("ws://localhost:3000");
         this.ws.binaryType = "arraybuffer";
         this.ws.onopen = this.onOpen.bind(this);
         this.ws.onmessage = this.onMessage.bind(this);

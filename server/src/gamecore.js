@@ -3,12 +3,8 @@ const Logger = require("./commons/logger");
 const Socket = require("./networks/socket");
 const Matching = require("./rooms/matching");
 
-// Root Directory
-// GameCore > Container | Network > Player > Component | Ability > Entities 
 class GameCore {
-    constructor() {
-        this.settings = {};
-    }
+    constructor() {}
 
     /**
      * メインエントリ
@@ -31,7 +27,6 @@ class GameCore {
      */
     update() {
         this.matching.update();
-        
         setTimeout(this.update.bind(this), config.SERVER_LOOP_TIME);
     }
 }

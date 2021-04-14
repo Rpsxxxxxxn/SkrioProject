@@ -3,7 +3,9 @@ const Gravity = require("../abilities/gravity");
 const Reflect = require("../abilities/reflect");
 const Teleport = require("../abilities/teleport");
 const config = require("../commons/config");
+const Utility = require("../commons/utility");
 const Vector2 = require("../commons/vector");
+const Writer = require("./writer");
 
 
 const ABILITY_TYPE = {
@@ -15,17 +17,21 @@ const ABILITY_TYPE = {
 
 class Receiver {
     constructor(ws) {
+        // Public
         this.ws = ws;
 
         this.router = {
             0: this.playGame.bind(this),
             1: this.mouseControl.bind(this),
             2: this.tabKeydown.bind(this),
-            3: this.chatEmit.bind(this),
+            3: this.addchat.bind(this),
             4: this.createAbility.bind(this),
             5: this.splitControl.bind(this),
             8: this.ejectControl.bind(this)
         }
+
+        // Private
+        this._chatRetransmissionTime = 0;
     }
 
     handle(reader) {
@@ -42,7 +48,11 @@ class Receiver {
             this.ws.player.createCells();
             this.ws.player.isJoined = true;
         } else {
-            this.ws.player.spawn();
+            let isNotJoin = false;
+            this.ws.player.cellsArray.forEach((cells) => { isNotJoin = cells.isEmpty; });
+            if (isNotJoin) {
+                this.ws.player.spawn();
+            }
         }
     }
 
@@ -63,9 +73,31 @@ class Receiver {
         }
     }
 
-    chatEmit(reader) {
-        const message = reader.getString();
-        
+    addchat(reader) {
+        // 現在時刻
+        const nowTime = Date.now();
+        // 種類
+        const type = reader.getUint8();
+        // 再送信制限
+        if (nowTime - this._chatRetransmissionTime > config.CHAT_RETRANSMISSION_TIME) {
+            const player = this.ws.player;
+            if (type === 0) {
+                // 全体送信
+                const message = Utility.stringSlice(reader.getString(), config.MESSAGE_MAX_LENGTH);
+                const packet = this.ws.emitter.chatMessage(player.name, message);
+                player.room.broadCastEmitter(packet);
+                player.room.addChatHistory(player.name, message);
+                this._chatRetransmissionTime = nowTime;
+            } else if (type === 1) {
+                // チーム内送信
+                const message = Utility.stringSlice(reader.getString(), config.MESSAGE_MAX_LENGTH);
+                this._chatRetransmissionTime = nowTime;
+            } else {
+                // 個人送信
+                const message = Utility.stringSlice(reader.getString(), config.MESSAGE_MAX_LENGTH);
+                this._chatRetransmissionTime = nowTime;
+            }
+        }
     }
     
     createAbility(type) {

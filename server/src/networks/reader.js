@@ -2,6 +2,10 @@ const Logger = require("../commons/logger");
 
 // Buffer.from
 class Reader {
+    /**
+     * バイナリ配列の読み取り
+     * @param {*} message バイナリ配列
+     */
     constructor(message) {
         this.offset = 0;
         this.buffer = message;

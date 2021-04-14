@@ -13,6 +13,7 @@ class Cells {
         this._mousePosition = new Vector2(0, 0);
         this._viewPosition = new Vector2(0, 0);
         this._room = null;
+        this._isEmpty = true;
     }
 
     destroy() {
@@ -64,6 +65,7 @@ class Cells {
      */
     spawn() {
         if (this._cells.length > 0) return;
+        this.isEmpty = false;
         this.color = Utility.getRandomColor();
         const position = Utility.getRandomPosition();
         const playerCell = new PlayerCell(this, this.room.counter, position.x, position.y, config.PLAYER_START_MASS, this.color);
@@ -152,6 +154,12 @@ class Cells {
                 this.insertCell(playerCell);
                 this.room.addQuadNode(playerCell);
             }
+        } else if (this._cells.length >= config.PLAYER_MIN_CELL_COUNT) {
+            // セルが最大数分裂後の処理
+            for (let i = 0; i < this._cells.length; i++) {
+                if (this._cells[i].mass < config.CELL_MAX_MASS) continue;
+                this._cells[i].mass = config.CELL_MAX_MASS;
+            }
         }
     }
 
@@ -190,7 +198,10 @@ class Cells {
     set viewPosition(value) { this._viewPosition = value; };
     get viewPosition() { return this._viewPosition; }
 
-    get isAlive() { return cell.length > 0; }
+    set isEmpty(value) { this._isEmpty = value; };
+    get isEmpty() { return this._isEmpty; }
+
+    get isAlive() { return this._cells.length > 0; }
 }
 
 module.exports = Cells;

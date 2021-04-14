@@ -40,6 +40,7 @@ export class Player {
      */
     addCell(id, type, x, y, size, color) {
         const cell = new Cell(this, id, type, x, y, size, color);
+        cell.name = this.name;
         this.cells.push(cell);
         this.gamecore.viewCells.push(cell);
     }

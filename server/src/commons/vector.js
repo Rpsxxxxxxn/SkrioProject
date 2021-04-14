@@ -14,9 +14,19 @@ class Vector2 {
         this.y += value.y;
     }
 
+    addScalar(value) {
+        this.x += value;
+        this.y += value;
+    }
+
     subtract(value) {
         this.x -= value.x;
         this.y -= value.y;
+    }
+
+    subtractScalar(value) {
+        this.x -= value;
+        this.y -= value;
     }
 
     multiply(value) {
@@ -24,9 +34,19 @@ class Vector2 {
         this.y *= value.y;
     }
 
+    multiplyScalar(value) {
+        this.x *= value;
+        this.y *= value;
+    }
+
     divide(value) {
         this.x /= value.x;
         this.y /= value.y;
+    }
+
+    divideScalar(value) {
+        this.x /= value;
+        this.y /= value;
     }
 
     direction(value) {

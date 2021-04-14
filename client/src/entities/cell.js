@@ -6,6 +6,7 @@ export class Cell {
         this.player = player;
         this.id = id;
         this.type = type;
+        this.name = "";
         this.position = new Vector2(x, y);
         this.newPosition = new Vector2(x, y);
         this.size = size;
@@ -47,6 +48,9 @@ export class Cell {
             render.setFillColor(`white`);
             render.getContext().font = `${this.size * 0.5}px 'ＭＳ ゴシック'`;
             render.getContext().textAlign = "center";
+            if (this.name) {
+                render.getContext().fillText(`${this.name}`, this.position.x, this.position.y);
+            }
             render.getContext().fillText(`${~~this.mass}`, this.position.x, this.position.y + (this.size * 0.7));
         }
         render.closePath();

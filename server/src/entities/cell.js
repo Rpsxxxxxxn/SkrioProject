@@ -2,11 +2,17 @@ const config = require("../commons/config");
 const Utility = require("../commons/utility");
 const Vector2 = require("../commons/vector");
 
-// Eject 1
-// Pellet 2
-// PlayerCell 3
-// Virus 4
 class Cell {
+    /**
+     * コンストラクタ
+     * @param {*} component 親
+     * @param {*} type タイプ { Elect: 1, Pellet: 2, PlayerCell: 3, Virus: 4 }
+     * @param {*} id セルID
+     * @param {*} x 位置X
+     * @param {*} y 位置Y
+     * @param {*} mass 質量
+     * @param {*} color 色
+     */
     constructor(component, type, id, x, y, mass, color) {
         this._component = component;
         this._type = type;
@@ -24,6 +30,9 @@ class Cell {
         this._node = null;
     }
 
+    /**
+     * 破棄処理
+     */
     destroy() {
         this._component = null;
         if (this._position) {
@@ -32,6 +41,10 @@ class Cell {
         }
     }
 
+    /**
+     * 更新処理
+     * @param {*} param 
+     */
     update(param) {
         if (this._node.width != this._size ||
             this._node.height != this._size) {
@@ -43,15 +56,28 @@ class Cell {
         this._position.y = Utility.clamp(this._position.y, 0, config.FIELD_SIZE);
     }
 
+    /**
+     * 当たり判定処理
+     * @param {*} room 
+     * @param {*} cell 
+     */
     collision(room, cell) {
         const eatMass = this._mass * config.CELL_EAT_RATE;
         if (eatMass < cell.mass) return;
         const distance = this._position.distance(cell.position);
         if (distance < this._size) {
+            // 食べられた側の処理
+            cell.setEaten(room, this);
+            // 食べた側の処理
             this.setEat(room, cell);
         }
     }
 
+    /**
+     * 剛体判定
+     * @param {*} room 
+     * @param {*} cell 
+     */
     rigidbody(room, cell) {
         const radius = this.size + cell.size;
         const distance = this.position.distance(cell.position);
@@ -68,6 +94,9 @@ class Cell {
         cell.position.add(new Vector2(direction.x * m2, direction.y * m2));
     }
 
+    /**
+     * 分裂の動き
+     */
     splitMove() {
         if (this._splitSpeed >= 1) {
             let speed = Math.sqrt(this._splitSpeed * this._splitSpeed / 100);
@@ -80,6 +109,9 @@ class Cell {
     }
     // セッター ---------------------------------------------------------------------------
 
+    /**
+     * ノードの簡易生成
+     */
     setNewNode() {
         this.node = {
             x: this._position.x - this._size,
@@ -90,6 +122,11 @@ class Cell {
         }
     }
 
+    /**
+     * 食べる処理
+     * @param {*} room 
+     * @param {*} cell 
+     */
     setEat(room, cell) {
         this._mass += cell.mass;
         if (cell.component != null && cell.type == 3) {
@@ -98,11 +135,28 @@ class Cell {
         room.removeQuadNode(cell);
     }
 
+    /**
+     * 食べられた処理
+     * @param {*} room 
+     * @param {*} cell 
+     */
+    setEaten(room, cell) {
+        // Children extends
+    }
+
+    /**
+     * 分裂時のパラメータ
+     * @param {*} value 
+     */
     setSplitParams(value) {
         this._splitAngle = value;
         this._splitSpeed = config.PLAYER_SPLIT_DISTANCE;
     }
 
+    /**
+     * 生成後からの経過時間
+     * @param {*} room 
+     */
     getTick(room) {
         return (room.tickTimer - this.createdTime);
     }

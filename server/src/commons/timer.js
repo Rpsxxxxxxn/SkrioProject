@@ -12,14 +12,6 @@ class Timer {
         }
         return false;
     }
-
-    get deltaTime() {
-        return (Date.now() - this._saveTime);
-    }
-
-    get scaleTime() {
-        return this.deltaTime * this._scale;
-    }
 }
 
 module.exports = Timer;

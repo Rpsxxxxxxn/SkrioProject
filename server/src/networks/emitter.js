@@ -145,14 +145,17 @@ class Emitter {
     }
 
     // 20 -------------------------------------------------
-    serverMessage() {
+    serverMessage(message) {
         const writer = new Writer();
         return writer.toBuffer();
     }
 
     // 21 -------------------------------------------------
-    chatMessage() {
+    chatMessage(name, message) {
         const writer = new Writer();
+        writer.setUint8(100);
+        writer.setString(name);
+        writer.setString(message);
         return writer.toBuffer();
     }
 

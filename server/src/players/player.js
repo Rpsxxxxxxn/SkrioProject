@@ -7,14 +7,14 @@ const Utility = require("../commons/utility");
 
 class Player {
     constructor(ws, id) {
-        // public
+        // Public
         this.ws = ws;
         this.isConnected = false;
         this.isJoined = false;
         this.account = new UserAccount();
         this.ipAddress = ws._socket.remoteAddress;
 
-        // private
+        // Private
         this._id = id;
         this._team = "";
         this._name = "";
@@ -23,7 +23,10 @@ class Player {
         this._cellsArray = [];
         this._zoomRange = 1.0;
         this._room = null;
+
+        // Player
         this._totalMass = 0;
+        this._totalSize = 0;
         
         // Camera
         this._position = new Vector2(0, 0);
@@ -35,6 +38,9 @@ class Player {
         }
     }
 
+    /**
+     * 破棄処理
+     */
     destroy() {
         this._cellsArray.forEach((cells) => {
             cells.destroy();
@@ -73,7 +79,14 @@ class Player {
      */
     updateCells() {
         this._cellsArray.forEach(cells => {
-            cells.update();
+            if (cells.isAlive) {
+                cells.update();
+            } else {
+                if (!cells.isEmpty) {
+                    cells.isEmpty = true;
+                    this.tabActiveCounter();
+                }
+            }
         });
     }
 
@@ -82,9 +95,20 @@ class Player {
      */
     updateViewNodes() {
         if (this._cellsArray.length) {
-            const activeCells = this._cellsArray[this._tabActive];
-            this._position.set(activeCells.viewPosition.x, activeCells.viewPosition.y); 
-    
+            this._position.clear();
+            switch (config.PLAYER_DUAL_CAMERA) {
+                case 0:
+                    const activeCells = this._cellsArray[this._tabActive];
+                    this._position.set(activeCells.viewPosition.x, activeCells.viewPosition.y); 
+                    break;
+                case 1:
+                    this._cellsArray.forEach((cells) => {
+                        this._position.add(cells.viewPosition); 
+                    })
+                    this._position.divideScalar(this._cellsArray.length);
+                    break;
+            }
+
             // 位置送信
             this.ws.emitter.updateViewPosition(this);
 
@@ -92,16 +116,16 @@ class Player {
             this.updateViewScale();
 
             // カメラの設定
-            this._newViewNodes = [];
             const viewBox = {
                 x: this._position.x - (config.PLAYER_VIEW_SIZE / this._scale),
                 y: this._position.y - (config.PLAYER_VIEW_SIZE / this._scale),
                 width: ((config.PLAYER_VIEW_SIZE * 2) / this._scale),
                 height: ((config.PLAYER_VIEW_SIZE * 2) / this._scale)
             };
-    
+            
             // 実際に映っている細胞の産出
             const newViewCells = this._room.colliding(viewBox);
+            this._newViewNodes = [];
             newViewCells.forEach(data => {
                 this._newViewNodes.push(data.cell);
             })
@@ -158,13 +182,12 @@ class Player {
     }
 
     updateViewScale() {
-        let totalSize = 0;
-        this._totalMass = 0;
+        this._totalMass = this._totalSize = 0;
         this._cellsArray[this._tabActive].cells.forEach((cell)=>{
-            totalSize += cell.size;
+            this._totalSize += cell.size;
             this._totalMass += cell.mass;
         })
-        this._scale = Math.pow(Math.min(64 / totalSize, 1), config.PLAYER_VIEW_SCALE);
+        this._scale = Math.pow(Math.min(64 / this._totalSize, 1), config.PLAYER_VIEW_SCALE);
     }
 
     // アクセッサプロパティ
@@ -172,14 +195,14 @@ class Player {
     get id() { return this._id; };
 
     set team(value) { 
-        this._team = Utility.stringSlice(value, 10); 
+        this._team = Utility.stringSlice(value, config.PLAYER_TEAM_MAX_LENGTH); 
     }
     get team() { 
         return this._team; 
     };
 
     set name(value) { 
-        this._name = Utility.stringSlice(value, 10);
+        this._name = Utility.stringSlice(value, config.PLAYER_NAME_MAX_LENGTH);
     }
     get name() { 
         return this._name; 

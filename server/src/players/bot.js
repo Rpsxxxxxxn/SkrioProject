@@ -4,9 +4,14 @@ class Bot extends Player {
 
         this.isConnected = true;
         this.isJoined = true;        
+        
+        // 生成
+        this.createCells();
     }
 
     update() {
         super.update();
     }
+
+    
 }
